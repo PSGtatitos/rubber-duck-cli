@@ -1,0 +1,27 @@
+{
+  "name": "atlas-terminal",
+  "version": "1.0.0",
+  "description": "AI assistant that lives in your terminal",
+  "main": "cli/index.js",
+  "bin": {
+    "atlas": "./cli/index.js"
+  },
+  "files": [
+    "cli/"
+  ],
+  "type": "module",
+  "scripts": {
+    "start": "node cli/index.js",
+    "dev": "node --watch cli/index.js"
+  },
+  "keywords": ["ai", "cli", "assistant", "terminal"],
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.0",
+    "inquirer": "^9.0.0",
+    "conf": "^12.0.0",
+    "groq-sdk": "^0.3.0"
+  }
+}
