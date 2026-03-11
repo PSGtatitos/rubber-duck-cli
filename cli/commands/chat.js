@@ -63,21 +63,30 @@ function attachProject(userInput) {
     return null
   }
 
-  const projectFiles = fs.readdirSync(resolved)
-  const projectContent = projectFiles.map(file => {
-    const filePath = path.join(resolved, file)
-    const stats = fs.statSync(filePath)
+  const readProject = (pathToRead, level = 0) => {
+    const dirContent = fs.readdirSync(pathToRead)
+    const result = []
 
-    if (stats.isFile()) {
-      const fileContent = fs.readFileSync(filePath, 'utf8')
-      return `File: ${file}\n${fileContent}`
-    } else if (stats.isDirectory()) {
-      return `Directory: ${file}`
-    }
-  }).join('\n\n')
+    dirContent.forEach(item => {
+      const fullPath = path.join(pathToRead, item)
+      const stats = fs.statSync(fullPath)
 
-  return `${question}\n\nProject "${projectPath}" contents:\n\`\`\`\n${projectContent}\n\`\`\``
+      if (stats.isDirectory()) {
+        result.push(`  `.repeat(level) + 'Directory: ' + item)
+        result.push(...readProject(fullPath, level + 1))
+      } else if (stats.isFile()) {
+        result.push(`  `.repeat(level) + 'File: ' + item)
+      }
+    })
+
+    return result
+  }
+
+  const projectContent = readProject(resolved)
+
+  return `${question}\n\nProject "${projectPath}" contents:\n\`\`\`\n${projectContent.join('\n')}\n\`\`\``
 }
+
 export async function chatCommand(options) {
   if (!config.get('groqApiKey')) {
     console.log(chalk.red('No API key found. Run atlas config first.'))
@@ -119,6 +128,7 @@ export async function chatCommand(options) {
   console.log(chalk.cyan('─'.repeat(50)))
   console.log(chalk.cyan('  ATLAS — type your message, or "exit" to quit'))
   console.log(chalk.cyan('  Tip: attach a file with --file path/to/file'))
+  console.log(chalk.cyan('  Tip: attach a project with --project path/to/project'))
   console.log(chalk.cyan('─'.repeat(50)) + '\n')
 
   const rl = readline.createInterface({
@@ -163,7 +173,6 @@ export async function chatCommand(options) {
         if (!withProject) return askQuestion()
         userInput = withProject
       }
-
 
       // System command check
       const systemResponse = handleSystemCommand(userInput)
