@@ -157,6 +157,7 @@ export async function chatCommand(options) {
         if (!withFile) return askQuestion()
         userInput = withFile
       }
+      
       if (userInput.includes('--project')) {
         const withProject = attachProject(userInput)
         if (!withProject) return askQuestion()
