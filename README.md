@@ -64,11 +64,10 @@ Ask a single question and get an answer immediately. Perfect for quick lookups w
 atlas ask "what is the difference between null and undefined in JavaScript?"
 ```
 
-Supports piping directly from the terminal:
+Supports adding files to the conversation:
 
 ```bash
-cat error.log | atlas ask "what is wrong here?"
-echo "explain this code" | atlas ask --pipe < index.js
+atlas ask "explain this file" --file example.txt
 ```
 
 ---

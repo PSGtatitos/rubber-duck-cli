@@ -13,6 +13,7 @@ program
 program
   .command('chat')
   .description('Start a conversation with ATLAS')
+  .option('-f, --file <path>', 'attach a file to start the conversation')
   .action(chatCommand)
 
 program

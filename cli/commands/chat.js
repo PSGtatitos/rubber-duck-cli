@@ -50,13 +50,43 @@ function attachFile(userInput) {
   return `${question}\n\nHere is the file "${fileName}":\n\`\`\`\n${fileContent}\n\`\`\``
 }
 
-export async function chatCommand() {
+export async function chatCommand(options) {
   if (!config.get('groqApiKey')) {
     console.log(chalk.red('No API key found. Run atlas config first.'))
     process.exit(1)
   }
 
   const conversationHistory = []
+
+  // If file passed at startup load it into context
+  if (options.file) {
+    const filePath = path.resolve(options.file)
+
+    if (!fs.existsSync(filePath)) {
+      console.log(chalk.red(`File not found: ${options.file}`))
+      process.exit(1)
+    }
+
+    const stats = fs.statSync(filePath)
+    if (stats.size > 50000) {
+      console.log(chalk.red('File too large. Maximum size is 50kb.'))
+      process.exit(1)
+    }
+
+    const fileContent = fs.readFileSync(filePath, 'utf8')
+    const fileName = path.basename(filePath)
+
+    conversationHistory.push({
+      role: 'user',
+      content: `I'm going to ask you questions about this file "${fileName}":\n\`\`\`\n${fileContent}\n\`\`\``
+    })
+    conversationHistory.push({
+      role: 'assistant',
+      content: `Got it! I've read "${fileName}". What would you like to know about it?`
+    })
+
+    console.log(chalk.gray(`\nLoaded: ${fileName}\n`))
+  }
 
   console.log(chalk.cyan('─'.repeat(50)))
   console.log(chalk.cyan('  ATLAS — type your message, or "exit" to quit'))
