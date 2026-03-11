@@ -50,6 +50,34 @@ function attachFile(userInput) {
   return `${question}\n\nHere is the file "${fileName}":\n\`\`\`\n${fileContent}\n\`\`\``
 }
 
+function attachFile(userInput) {
+  if (!userInput.includes('--project')) return userInput
+
+  const parts = userInput.split('--project')
+  const queston = parts[0].trim()
+  const projectPath = parts[1].trim()
+  const resolved = path.resolve(projectPath)
+
+  if (!fs.existsSync(resolved)) {
+    console.log(chalk.red(`Project not found: ${projectPath}`))
+    return null
+  }
+
+  const projectFiles = fs.readdirSync(resolved)
+  const projectContent = projectFiles.map(file => {
+    const filePath = path.join(resolved, file)
+    const stats = fs.statSync(filePath)
+
+    if (stats.isFile()) {
+      const fileContent = fs.readFileSync(filePath, 'utf8')
+      return `File: ${file}\n${fileContent}`
+    } else if (stats.isDirectory()) {
+      return `Directory: ${file}`
+    }
+  }).join('\n\n')
+
+  return `${question}\n\nProject "${projectPath}" contents:\n\`\`\`\n${projectContent}\n\`\`\``
+}
 export async function chatCommand(options) {
   if (!config.get('groqApiKey')) {
     console.log(chalk.red('No API key found. Run atlas config first.'))
