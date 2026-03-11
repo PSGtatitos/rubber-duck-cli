@@ -1,7 +1,7 @@
 # ATLAS CLI 🤖
 
 A fast, lightweight AI assistant that lives in your terminal. Powered by Groq.
-
+ATLAS is a BYOK (Bring Your Own Key) tool so check the Quick Start part of this README.md file. 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)
 ![Node](https://img.shields.io/badge/node-18+-green?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-purple?style=flat-square)
