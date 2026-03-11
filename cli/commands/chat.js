@@ -261,6 +261,15 @@ export async function chatCommand(options) {
           const token = chunk.choices[0]?.delta?.content || ''
           process.stdout.write(token)
           fullResponse += token
+
+          // Check if the response is streaming a large response
+          if (chunk.choices[0]?.finish_reason === 'length') {
+            // Pause the stream
+            await new Promise(resolve => setTimeout(resolve, 1000))
+
+            // Continue the conversation with the next part of the response
+            let stream = await askGroq(fullResponse, conversationHistory)
+          }
         }
 
         console.log('\n')
