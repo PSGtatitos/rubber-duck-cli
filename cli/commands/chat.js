@@ -50,11 +50,11 @@ function attachFile(userInput) {
   return `${question}\n\nHere is the file "${fileName}":\n\`\`\`\n${fileContent}\n\`\`\``
 }
 
-function attachFile(userInput) {
+function attachProject(userInput) {
   if (!userInput.includes('--project')) return userInput
 
   const parts = userInput.split('--project')
-  const queston = parts[0].trim()
+  const question = parts[0].trim()
   const projectPath = parts[1].trim()
   const resolved = path.resolve(projectPath)
 
@@ -157,6 +157,12 @@ export async function chatCommand(options) {
         if (!withFile) return askQuestion()
         userInput = withFile
       }
+      if (userInput.includes('--project')) {
+        const withProject = attachProject(userInput)
+        if (!withProject) return askQuestion()
+        userInput = withProject
+      }
+
 
       // System command check
       const systemResponse = handleSystemCommand(userInput)
