@@ -18,6 +18,7 @@ program
 program
   .command('ask <question>')
   .description('Ask ATLAS a single question')
+  .option('-f, --file <path>', 'attach a file to your question')
   .action(askCommand)
 
 program

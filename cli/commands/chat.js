@@ -1,10 +1,12 @@
 import readline from 'readline'
 import chalk from 'chalk'
+import fs from 'fs'
+import path from 'path'
 import { askGroq } from '../utils/groq.js'
 import { handleSystemCommand } from '../utils/system.js'
 import Conf from 'conf'
 
-const config = new Conf({ projectName: 'atlas-terminal' })
+const config = new Conf({ projectName: 'atlas-cli' })
 
 const STOP_PHRASES = [
   'goodbye atlas',
@@ -23,8 +25,32 @@ const NOISE_WORDS = new Set([
 
 const MIN_INPUT_LENGTH = 2
 
+function attachFile(userInput) {
+  if (!userInput.includes('--file')) return userInput
+
+  const parts = userInput.split('--file')
+  const question = parts[0].trim()
+  const filePath = parts[1].trim()
+  const resolved = path.resolve(filePath)
+
+  if (!fs.existsSync(resolved)) {
+    console.log(chalk.red(`File not found: ${filePath}\n`))
+    return null
+  }
+
+  const stats = fs.statSync(resolved)
+  if (stats.size > 50000) {
+    console.log(chalk.red('File too large. Maximum size is 50kb.\n'))
+    return null
+  }
+
+  const fileContent = fs.readFileSync(resolved, 'utf8')
+  const fileName = path.basename(resolved)
+
+  return `${question}\n\nHere is the file "${fileName}":\n\`\`\`\n${fileContent}\n\`\`\``
+}
+
 export async function chatCommand() {
-  // Check config exists
   if (!config.get('groqApiKey')) {
     console.log(chalk.red('No API key found. Run atlas config first.'))
     process.exit(1)
@@ -34,6 +60,7 @@ export async function chatCommand() {
 
   console.log(chalk.cyan('─'.repeat(50)))
   console.log(chalk.cyan('  ATLAS — type your message, or "exit" to quit'))
+  console.log(chalk.cyan('  Tip: attach a file with --file path/to/file'))
   console.log(chalk.cyan('─'.repeat(50)) + '\n')
 
   const rl = readline.createInterface({
@@ -43,7 +70,7 @@ export async function chatCommand() {
 
   const askQuestion = () => {
     rl.question(chalk.green('You: '), async (input) => {
-      const userInput = input.trim()
+      let userInput = input.trim()
 
       // Empty input
       if (!userInput) {
@@ -64,6 +91,13 @@ export async function chatCommand() {
       ) {
         console.log(chalk.gray('[Skipped] Input too short.\n'))
         return askQuestion()
+      }
+
+      // File attachment check
+      if (userInput.includes('--file')) {
+        const withFile = attachFile(userInput)
+        if (!withFile) return askQuestion()
+        userInput = withFile
       }
 
       // System command check
@@ -89,7 +123,6 @@ export async function chatCommand() {
 
         console.log('\n')
 
-        // Update conversation history
         conversationHistory.push({ role: 'user', content: userInput })
         conversationHistory.push({ role: 'assistant', content: fullResponse })
 
