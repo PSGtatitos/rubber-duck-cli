@@ -1,6 +1,6 @@
 {
   "name": "atlas-terminal",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "AI assistant that lives in your terminal",
   "main": "cli/index.js",
   "bin": {
