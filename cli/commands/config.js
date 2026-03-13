@@ -12,10 +12,10 @@ export async function configCommand() {
   const existingTavily = config.get('tavilyApiKey')
 
   if (existingGroq) {
-    console.log(chalk.gray(`Current API key: ${existing.slice(0, 8)}...\n`))
+    console.log(chalk.gray(`Current API key: ${existingGroq.slice(0, 8)}...\n`))
   }
   if (existingTavily) {
-    console.log(chalk.grey(`Current API key: ${existing.slice(0, 8)}...\n`))
+    console.log(chalk.grey(`Current API key: ${existingTavily.slice(0, 8)}...\n`))
   }
 
   const answers = await inquirer.prompt([
