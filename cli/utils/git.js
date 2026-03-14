@@ -50,4 +50,4 @@ export function getGitContext() {
 
 export function isGitRepo() {
   return run('git rev-parse --is-inside-work-tree') !== null
-}
+}// test change
