@@ -123,7 +123,7 @@ export async function askCommand(question, options) {
       console.log(chalk.gray('Git context loaded.\n'))
     }
   }
-  
+
   const spinner = ora('Thinking...').start()
 
   try {
@@ -155,7 +155,6 @@ export async function askCommand(question, options) {
       process.stdout.write(token)
       fullResponse += token
 
-      // Handle token limit mid stream
       if (chunk.choices[0]?.finish_reason === 'length') {
         await new Promise(resolve => setTimeout(resolve, 1000))
         stream = await askGroq(fullResponse, [
@@ -171,8 +170,8 @@ export async function askCommand(question, options) {
       console.log('\n' + chalk.gray('Sources:'))
       urls.forEach(url => console.log(chalk.gray(`→ ${url}`)))
     }
-    
-    //Handle --write flag
+
+    // Handle --write flag
     if (options.write) {
       const code = extractCode(fullResponse)
       const written = await writeFile(options.write, code)
@@ -180,6 +179,7 @@ export async function askCommand(question, options) {
         console.log('\n' + chalk.green(`✓ Written to ${options.write}`))
       }
     }
+
     console.log('\n')
 
   } catch (error) {
