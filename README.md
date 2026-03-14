@@ -1,32 +1,48 @@
-# ATLAS CLI 🤖
+# ATLAS Terminal 🤖
 
-A fast, lightweight AI assistant that lives in your terminal. Powered by Groq.
-ATLAS is a BYOK (Bring Your Own Key) tool so check the Quick Start part of this README.md file. 
-![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)
+An open source AI assistant that lives in your terminal. Bring your own API keys — no accounts, no subscriptions, no limits.
+
+![Version](https://img.shields.io/badge/version-1.0.6-blue?style=flat-square)
 ![Node](https://img.shields.io/badge/node-18+-green?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-purple?style=flat-square)
+![BYOK](https://img.shields.io/badge/BYOK-bring%20your%20own%20keys-orange?style=flat-square)
+
+---
+
+## Features
+
+- 💬 **Chat mode** — back and forth conversation with memory
+- ⚡ **Ask mode** — single question, instant answer
+- 📄 **File context** — attach any file to your question
+- 📁 **Project context** — load your entire codebase into context
+- 🌐 **Web search** — search the web from your terminal
+- ✍️ **Write files** — generate and write code directly to files
+- 🔄 **Streaming responses** — responses print token by token
 
 ---
 
 ## Installation
 
 ```bash
-npm install -g atlas-cli
+npm install -g atlas-terminal
 ```
 
 ---
 
 ## Quick Start
 
-### 1. Configure ATLAS with your Groq API key
+### 1. Get your API keys
+
+- **Groq** (required) — free at [console.groq.com](https://console.groq.com/keys)
+- **Tavily** (optional, for web search) — free at [app.tavily.com](https://app.tavily.com)
+
+### 2. Configure ATLAS
 
 ```bash
 atlas config
 ```
 
-Get a free Groq API key at [console.groq.com](https://console.groq.com/keys)
-
-### 2. Start chatting
+### 3. Start chatting
 
 ```bash
 atlas chat
@@ -37,59 +53,110 @@ atlas chat
 ## Commands
 
 ### `atlas chat`
-Start a back and forth conversation with ATLAS. Conversation memory is maintained throughout the session.
+
+Start a back and forth conversation. Conversation memory is maintained throughout the session.
 
 ```bash
 atlas chat
 ```
 
-```
-──────────────────────────────────────────────────
-  ATLAS — type your message, or "exit" to quit
-──────────────────────────────────────────────────
-
-You: what is a REST API?
-ATLAS: A REST API is...
-
-You: exit
-ATLAS: Goodbye!
-```
+Options:
 ```bash
-atlas chat --file index.js
+atlas chat --file path/to/file       # load a file into context
+atlas chat --project path/to/project # load entire project into context
 ```
-This provides the chat with access to read the file and tell you anything you ask about that file.
+
+Mid-conversation flags:
+```
+You: explain this --file index.js
+You: search for latest Node.js version --search
+You: create a README --write README.md
+```
+
 ---
 
 ### `atlas ask`
-Ask a single question and get an answer immediately. Perfect for quick lookups without starting a full conversation.
+
+Ask a single question and get an answer immediately.
 
 ```bash
-atlas ask "what is the difference between null and undefined in JavaScript?"
+atlas ask "what is the difference between null and undefined?"
 ```
 
-Supports adding files to the conversation:
-
+Options:
 ```bash
-atlas ask "explain this file" --file example.txt
+atlas ask "explain this" --file index.js                    # attach a file
+atlas ask "explain this" --project .                        # attach current project
+atlas ask "latest React version" --search                   # search the web
+atlas ask "create an express server" --write server.js      # write to file
+```
+
+Supports piping:
+```bash
+cat error.log | atlas ask "what is wrong here?"
 ```
 
 ---
 
 ### `atlas config`
-First time setup. Saves your Groq API key securely on your machine.
+
+First time setup. Saves your API keys locally on your machine.
 
 ```bash
 atlas config
 ```
 
-Your API key is stored locally at `~/.config/atlas-cli/config.json` and never sent anywhere except directly to Groq.
+Keys are stored locally at `~/.config/atlas-terminal/config.json` and never sent anywhere except directly to Groq and Tavily.
+
+---
+
+## Examples
+
+```bash
+# Explain a file
+atlas ask "explain what this does" --file index.js
+
+# Debug an error
+cat error.log | atlas ask "what is wrong here?"
+
+# Generate and write code
+atlas ask "create a REST API with Express" --write server.js
+
+# Fix a bug in a file
+atlas ask "fix the bug in this file" --file index.js --write index.js
+
+# Search the web
+atlas ask "what is the latest version of Node.js" --search
+
+# Load entire project into chat
+atlas chat --project .
+You: what does this project do?
+You: how can I improve the architecture?
+You: add input validation --file index.js --write index.js
+```
+
+---
+
+## How It Works
+
+ATLAS is fully client side. Your API keys never leave your machine except to talk directly to Groq and Tavily. There is no backend, no account required, and no usage limits beyond what your API keys allow.
+
+```
+atlas chat
+    ↓
+Your machine
+    ↓ direct API call
+Groq (AI responses)
+Tavily (web search)
+```
 
 ---
 
 ## Requirements
 
 - Node.js 18 or higher
-- A free Groq API key from [console.groq.com](https://console.groq.com/keys)
+- Groq API key — free at [console.groq.com](https://console.groq.com/keys)
+- Tavily API key — optional, free at [app.tavily.com](https://app.tavily.com)
 
 ---
 
@@ -98,10 +165,19 @@ Your API key is stored locally at `~/.config/atlas-cli/config.json` and never se
 - **Node.js** — runtime
 - **Commander.js** — CLI command handling
 - **Groq SDK** — AI responses via llama-3.3-70b-versatile
+- **Tavily** — web search
 - **Chalk** — terminal colors
 - **Ora** — loading spinners
 - **Inquirer** — interactive config prompts
 - **Conf** — local config storage
+
+---
+
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.
+
+ATLAS Terminal is and will remain open source and BYOK. Features that require a centralized backend or paid service are not aligned with the project direction.
 
 ---
 
@@ -110,17 +186,21 @@ Your API key is stored locally at `~/.config/atlas-cli/config.json` and never se
 - [x] `atlas chat` — conversational mode
 - [x] `atlas ask` — single question mode
 - [x] `atlas config` — API key setup
-- [X] Streaming responses
-- [X] `atlas chat` with file context (`atlas chat --file index.js`)
-- [X] Web search tool
-- [ ] Read and write files
+- [x] Streaming responses
+- [x] `--file` flag — attach files to questions
+- [x] `--project` flag — load entire codebase
+- [x] `--search` flag — web search via Tavily
+- [x] `--write` flag — write responses to files
+- [ ] Run terminal commands
+- [ ] Git integration
+- [ ] Multi-file write support
 
 ---
 
 ## License
 
-MIT — feel free to use and modify.
+MIT — free to use, modify, and distribute.
 
 ---
 
-Built by [Chris](https://github.com/PSGtatitos)
+Built by [Chris](https://github.com/PSGtatitos) from Athens, Greece 🇬🇷
