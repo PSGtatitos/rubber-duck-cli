@@ -1,7 +1,7 @@
 import { tavily } from '@tavily/core'
 import Conf from 'conf'
 
-const config = new Conf({ projectName: 'atlas-cli' })
+const config = new Conf({ projectName: 'atlas-terminal' })
 
 export async function searchWeb(query) {
   const client = tavily({ apiKey: config.get('tavilyApiKey') })
