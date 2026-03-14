@@ -35,4 +35,26 @@ program
   .description('Configure ATLAS settings')
   .action(configCommand)
 
+program
+  .command('help')
+  .description('Display help for Atlas')
+  .action(() => {
+    console.log(chalk.cyan('ATLAS Help'))
+    console.log(chalk.cyan('---------------'))
+    console.log(chalk.gray('ATLAS is a helpful AI developer assistant that lives in your terminal.'))
+    console.log(chalk.gray('It can answer questions about your code, help with debugging, and more.'))
+
+    console.log(chalk.cyan('\nCommands:'))
+    console.log(chalk.cyan('  atlas chat       Start a conversation with ATLAS'))
+    console.log(chalk.cyan('  atlas ask <question>  Ask ATLAS a single question'))
+    console.log(chalk.cyan('  atlas config      Configure ATLAS settings'))
+    console.log(chalk.cyan('  atlas help        Display this help message'))
+
+    console.log(chalk.cyan('\nOptions:'))
+    console.log(chalk.cyan('  --file <path>     Attach a file to your question or conversation'))
+    console.log(chalk.cyan('  --project <path>  Attach a project directory to your question or conversation'))
+    console.log(chalk.cyan('  --search          Search the web to answer your question'))
+    console.log(chalk.cyan('  --write <path>    Write the response to a file'))
+    console.log(chalk.cyan('  --git            Include git context in your question'))
+  })
 program.parse()

@@ -192,7 +192,7 @@ ATLAS Terminal is and will remain open source and BYOK. Features that require a 
 - [x] `--search` flag — web search via Tavily
 - [x] `--write` flag — write responses to files
 - [ ] Run terminal commands
-- [ ] Git integration
+- [X] Git integration
 - [ ] Multi-file write support
 
 ---
