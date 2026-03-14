@@ -4,6 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import { askGroq } from '../utils/groq.js'
 import { searchWeb } from '../utils/search.js'
+import { extractCode, writeFile } from '../utils/write.js'
 import Conf from 'conf'
 
 const config = new Conf({ projectName: 'atlas-terminal' })
@@ -155,7 +156,15 @@ export async function askCommand(question, options) {
       console.log('\n' + chalk.gray('Sources:'))
       urls.forEach(url => console.log(chalk.gray(`→ ${url}`)))
     }
-
+    
+    //Handle --write flag
+    if (options.write) {
+      const code = extractCode(fullResponse)
+      const written = await writeFile(options.write, code)
+      if (written) {
+        console.log('\n' + chalk.green(`✓ Written to ${options.write}`))
+      }
+    }
     console.log('\n')
 
   } catch (error) {

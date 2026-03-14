@@ -4,6 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import { askGroq } from '../utils/groq.js'
 import { searchWeb } from '../utils/search.js'
+import { extractCode, writeFile } from '../utils/write.js'
 import { handleSystemCommand } from '../utils/system.js'
 import Conf from 'conf'
 
@@ -201,6 +202,7 @@ export async function chatCommand(options) {
   console.log(chalk.cyan('  Tip: attach a file with --file path/to/file'))
   console.log(chalk.cyan('  Tip: attach a project with --project path/to/project'))
   console.log(chalk.cyan('  Tip: search the web with --search in your message'))
+  console.log(chalk.cyan('  Tip: write response to a file with --write filename'))
   console.log(chalk.cyan('─'.repeat(50)) + '\n')
 
   const rl = readline.createInterface({
@@ -228,6 +230,14 @@ export async function chatCommand(options) {
       ) {
         console.log(chalk.gray('[Skipped] Input too short.\n'))
         return askQuestion()
+      }
+
+      // Extract --write target before processing
+      let writeTarget = null
+      if (userInput.includes('--write')) {
+        const parts = userInput.split('--write')
+        userInput = parts[0].trim()
+        writeTarget = parts[1].trim()
       }
 
       if (userInput.includes('--file')) {
@@ -291,6 +301,16 @@ export async function chatCommand(options) {
               { role: 'user', content: 'Please continue.' }
             ])
           }
+        }
+
+        // Handle --write
+        if (writeTarget) {
+          const code = extractCode(fullResponse)
+          const written = await writeFile(writeTarget, code)
+          if (written) {
+            console.log('\n' + chalk.green(`✓ Written to ${writeTarget}`))
+          }
+          writeTarget = null
         }
 
         // Print sources if search was used
