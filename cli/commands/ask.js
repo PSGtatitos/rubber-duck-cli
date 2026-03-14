@@ -6,7 +6,7 @@ import { askGroq } from '../utils/groq.js'
 import { searchWeb } from '../utils/search.js'
 import Conf from 'conf'
 
-const config = new Conf({ projectName: 'atlas-cli' })
+const config = new Conf({ projectName: 'atlas-terminal' })
 
 const IGNORED = ['node_modules', '.git', '.env', 'dist', 'build']
 const READABLE_EXTENSIONS = ['.js', '.ts', '.json', '.md', '.py', '.html', '.css', '.txt']
