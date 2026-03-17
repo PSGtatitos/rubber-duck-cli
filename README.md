@@ -1,11 +1,16 @@
-# ATLAS Terminal 🤖
+# 🦆 rubber-duck-cli
 
-An open source AI assistant that lives in your terminal. Bring your own API keys — no accounts, no subscriptions, no limits.
+> Meet Atlas — the rubber duck that actually talks back.
 
-![Version](https://img.shields.io/badge/version-1.0.27-blue?style=flat-square)
+Every developer has a rubber duck on their desk. Yours is named Atlas. Unlike other rubber ducks, Atlas doesn't just sit there — he answers your questions, reads your code, searches the web, and writes files. Powered by AI, living in your terminal.
+
+![Version](https://img.shields.io/badge/version-1.0.28-blue?style=flat-square)
 ![Node](https://img.shields.io/badge/node-18+-green?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-purple?style=flat-square)
 ![BYOK](https://img.shields.io/badge/BYOK-bring%20your%20own%20keys-orange?style=flat-square)
+[![GitHub stars](https://img.shields.io/github/stars/PSGtatitos/ATLAS-CLI?style=flat-square)](https://github.com/PSGtatitos/ATLAS-CLI/stargazers)
+
+> If Atlas helps you, a ⭐ on GitHub goes a long way!
 
 ---
 
@@ -25,7 +30,13 @@ An open source AI assistant that lives in your terminal. Bring your own API keys
 ## Installation
 
 ```bash
-npm install -g atlas-terminal
+npm install -g rubber-duck-cli
+```
+
+Then talk to Atlas:
+
+```bash
+atlas chat
 ```
 
 ---
@@ -37,13 +48,13 @@ npm install -g atlas-terminal
 - **Groq** (required) — free at [console.groq.com](https://console.groq.com/keys)
 - **Tavily** (optional, for web search) — free at [app.tavily.com](https://app.tavily.com)
 
-### 2. Configure ATLAS
+### 2. Introduce yourself to Atlas
 
 ```bash
 atlas config
 ```
 
-### 3. Start chatting
+### 3. Start talking
 
 ```bash
 atlas chat
@@ -55,7 +66,7 @@ atlas chat
 
 ### `atlas chat`
 
-Start a back and forth conversation. Conversation memory is maintained throughout the session.
+Start a back and forth conversation with Atlas. Memory is maintained throughout the session.
 
 ```bash
 atlas chat
@@ -80,7 +91,7 @@ You: what changed recently --git
 
 ### `atlas ask`
 
-Ask a single question and get an answer immediately.
+Ask Atlas a single question and get an answer immediately.
 
 ```bash
 atlas ask "what is the difference between null and undefined?"
@@ -105,19 +116,19 @@ cat error.log | atlas ask "what is wrong here?"
 
 ### `atlas config`
 
-First time setup. Saves your API keys locally on your machine.
+First time setup. Introduce yourself to Atlas and give him his API keys.
 
 ```bash
 atlas config
 ```
 
-Keys are stored locally at `~/.config/atlas-terminal/config.json` and never sent anywhere except directly to Groq and Tavily.
+Keys are stored locally at `~/.config/rubber-duck-cli/config.json` and never sent anywhere except directly to Groq and Tavily.
 
 ---
 
 ### `atlas help`
 
-Display all available commands and options.
+Ask Atlas what he can do.
 
 ```bash
 atlas help
@@ -128,54 +139,54 @@ atlas help
 ## Examples
 
 ```bash
-# Explain a file
+# Ask Atlas to explain a file
 atlas ask "explain what this does" --file index.js
 
-# Debug an error
+# Let Atlas debug your errors
 cat error.log | atlas ask "what is wrong here?"
 
-# Generate and write code
+# Ask Atlas to write code for you
 atlas ask "create a REST API with Express" --write server.js
 
-# Fix a bug in a file
+# Ask Atlas to fix a bug
 atlas ask "fix the bug in this file" --file index.js --write index.js
 
-# Search the web
+# Ask Atlas to search the web
 atlas ask "what is the latest version of Node.js" --search
 
-# Load entire project into chat
+# Have a full conversation about your codebase
 atlas chat --project .
 You: what does this project do?
 You: how can I improve the architecture?
+You: add input validation --file index.js --write index.js
 
-# Git workflow
+# Let Atlas handle your git workflow
 git add .
 atlas ask "write a commit message for my staged changes" --git
 
-# Understand recent history
+# Understand what changed in your repo
 atlas ask "summarize what changed in the last 10 commits" --git
 
 # Git context in chat
 atlas chat --git
 You: what did I change today?
-You: what branch am I on?
 You: write a commit message for my staged changes
 ```
 
 ---
 
-## How It Works
+## How Atlas Works
 
-ATLAS is fully client side. Your API keys never leave your machine except to talk directly to Groq and Tavily. There is no backend, no account required, and no usage limits beyond what your API keys allow.
+Atlas is fully client side. Your API keys never leave your machine except to talk directly to Groq and Tavily. There is no backend, no account required, and no usage limits beyond what your API keys allow.
 
 ```
 atlas chat
     ↓
 Your machine
     ↓ direct API call
-Groq (AI responses)
-Tavily (web search)
-Git (local repo context)
+Groq (Atlas's brain)
+Tavily (Atlas's web search)
+Git (Atlas reads your repo)
 ```
 
 ---
@@ -204,8 +215,8 @@ Git (local repo context)
 
 - **Node.js** — runtime
 - **Commander.js** — CLI command handling
-- **Groq SDK** — AI responses via llama-3.3-70b-versatile
-- **Tavily** — web search
+- **Groq SDK** — Atlas's brain via llama-3.3-70b-versatile
+- **Tavily** — Atlas's web search
 - **Chalk** — terminal colors
 - **Ora** — loading spinners
 - **Inquirer** — interactive config prompts
@@ -217,7 +228,7 @@ Git (local repo context)
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.
 
-ATLAS Terminal is and will remain open source and BYOK. Features that require a centralized backend or paid service are not aligned with the project direction.
+rubber-duck-cli is and will remain open source and BYOK. Features that require a centralized backend or paid service are not aligned with the project direction.
 
 ---
 
@@ -234,6 +245,7 @@ ATLAS Terminal is and will remain open source and BYOK. Features that require a 
 - [x] `--write` flag — write responses to files
 - [x] `--git` flag — git integration and commit message generation
 - [ ] `--run` flag — execute terminal commands safely
+- [ ] TTS voice mode
 - [ ] Multi-file write support
 
 ---
@@ -245,3 +257,5 @@ MIT — free to use, modify, and distribute.
 ---
 
 Built by [Chris](https://github.com/PSGtatitos) from Athens, Greece 🇬🇷
+
+*Atlas the rubber duck has been helping developers since 2026. He's very smart for a duck.*
