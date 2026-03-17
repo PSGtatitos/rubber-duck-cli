@@ -71,7 +71,7 @@ program
     console.log(chalk.gray('    You: create a server --write server.js'))
     console.log(chalk.gray('    You: what changed recently --git'))
 
-    console.log(chalk.cyan('\n  More info: github.com/PSGtatitos/RUBBER-DUCK-CLI\n'))
+    console.log(chalk.cyan('\n  More info: github.com/PSGtatitos/rubber-duck-cli\n'))
   })
 
 program.parse()
