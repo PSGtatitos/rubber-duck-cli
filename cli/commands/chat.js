@@ -9,7 +9,7 @@ import { getGitContext, isGitRepo } from '../utils/git.js'
 import { handleSystemCommand } from '../utils/system.js'
 import Conf from 'conf'
 
-const config = new Conf({ projectName: 'atlas-terminal' })
+const config = new Conf({ projectName: 'rubber-duck-cli' })
 
 const STOP_PHRASES = [
   'goodbye atlas',

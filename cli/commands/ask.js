@@ -8,7 +8,7 @@ import { extractCode, writeFile } from '../utils/write.js'
 import { getGitContext, isGitRepo } from '../utils/git.js'
 import Conf from 'conf'
 
-const config = new Conf({ projectName: 'atlas-terminal' })
+const config = new Conf({ projectName: 'rubber-duck-cli' })
 
 const IGNORED = ['node_modules', '.git', '.env', 'dist', 'build']
 const READABLE_EXTENSIONS = ['.js', '.ts', '.json', '.md', '.py', '.html', '.css', '.txt']

@@ -1,7 +1,7 @@
 import Groq from 'groq-sdk'
 import Conf from 'conf'
 
-const config = new Conf({ projectName: 'atlas-terminal' })
+const config = new Conf({ projectName: 'rubber-duck-cli' })
 
 export async function askGroq(text, conversationHistory, searchResults = null) {
   const groq = new Groq({

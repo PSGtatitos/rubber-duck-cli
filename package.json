@@ -1,7 +1,7 @@
 {
-  "name": "atlas-terminal",
+  "name": "rubber-duck-cli",
   "version": "1.0.31",
-  "description": "AI assistant that lives in your terminal",
+  "description": "Meet Atlas - the rubber duck that talks back",
   "main": "cli/index.js",
   "bin": {
     "atlas": "./cli/index.js"

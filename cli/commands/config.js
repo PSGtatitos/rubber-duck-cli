@@ -3,7 +3,7 @@ import chalk from 'chalk'
 import Conf from 'conf'
 import Groq from 'groq-sdk'
 
-const config = new Conf({ projectName: 'atlas-terminal' })
+const config = new Conf({ projectName: 'rubber-duck-cli' })
 
 export async function configCommand() {
   console.log(chalk.cyan('\nWelcome to ATLAS setup!\n'))

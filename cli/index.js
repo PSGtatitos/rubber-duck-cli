@@ -8,12 +8,12 @@ import chalk from 'chalk'
 
 program
   .name('atlas')
-  .description('AI assistant that lives in your terminal')
+  .description('Meet Atlas 🦆 — the rubber duck that talks back. AI developer assistant for your terminal.')
   .version('1.0.0')
 
 program
   .command('chat')
-  .description('Start a conversation with ATLAS')
+  .description('Start a conversation with Atlas')
   .option('-f, --file <path>', 'attach a file to start the conversation')
   .option('-p, --project <path>', 'attach a project directory to start the conversation')
   .option('-s, --search', 'search the web to answer your question')
@@ -23,7 +23,7 @@ program
 
 program
   .command('ask <question>')
-  .description('Ask ATLAS a single question')
+  .description('Ask Atlas a single question')
   .option('-f, --file <path>', 'attach a file to your question')
   .option('-p, --project <path>', 'attach a project directory to your question')
   .option('-s, --search', 'search the web to answer your question')
@@ -33,14 +33,14 @@ program
 
 program
   .command('config')
-  .description('Configure ATLAS settings')
+  .description('Configure Atlas settings')
   .action(configCommand)
 
 program
   .command('help')
-  .description('Display help for ATLAS')
+  .description('Display help for Atlas')
   .action(() => {
-    console.log(chalk.cyan('\n  ATLAS Terminal — AI assistant in your terminal'))
+    console.log(chalk.cyan('\n  Rubber Duck CLI — AI assistant in your terminal'))
     console.log(chalk.cyan('  ─'.repeat(25)))
 
     console.log(chalk.cyan('\n  Commands:'))
@@ -71,7 +71,7 @@ program
     console.log(chalk.gray('    You: create a server --write server.js'))
     console.log(chalk.gray('    You: what changed recently --git'))
 
-    console.log(chalk.cyan('\n  More info: github.com/PSGtatitos/ATLAS-CLI\n'))
+    console.log(chalk.cyan('\n  More info: github.com/PSGtatitos/RUBBER-DUCK-CLI\n'))
   })
 
 program.parse()
