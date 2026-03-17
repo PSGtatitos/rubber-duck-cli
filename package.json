@@ -1,6 +1,6 @@
 {
   "name": "rubber-duck-cli",
-  "version": "1.0.32",
+  "version": "1.0.33",
   "description": "Meet Atlas - the rubber duck that talks back",
   "main": "cli/index.js",
   "bin": {
