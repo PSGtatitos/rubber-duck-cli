@@ -65,4 +65,4 @@ We use the following commit message guidelines:
 Atlas Terminal is licensed under the MIT License. By contributing to the project, you agree to release your contributions under this license.
 
 ## Contact
-If you have any questions or need help with contributing, please don't hesitate to contact us at [\[contact email or GitHub issue tracker\]](https://github.com/PSGtatitos/ATLAS-CLI/issues).
+If you have any questions or need help with contributing, please don't hesitate to contact us at [\[contact email or GitHub issue tracker\]](https://github.com/PSGtatitos/rubber-duck-cli/issues).
