@@ -11,29 +11,40 @@ const BLOCKED = [
   /chmod\s+-R\s+777\s*\//,
 ]
 
-function confirmRun(command) {
+function confirmRun(command, rl = null) {
+  if (rl) {
+    return new Promise((resolve) => {
+      rl.question(
+        chalk.yellow(`\nI want to run: `) + chalk.white(command) + chalk.yellow('\nConfirm? (y/n): '),
+        (answer) => {
+          resolve(answer.toLowerCase() === 'y')
+        }
+      )
+    })
+  }
+
   return new Promise((resolve) => {
-    const rl = readline.createInterface({
+    const tempRl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
     })
-    rl.question(
+    tempRl.question(
       chalk.yellow(`\nI want to run: `) + chalk.white(command) + chalk.yellow('\nConfirm? (y/n): '),
       (answer) => {
-        rl.close()
+        tempRl.close()
         resolve(answer.toLowerCase() === 'y')
       }
     )
   })
 }
 
-export async function runCommand(command) {
+export async function runCommand(command, rl = null) {
   if (BLOCKED.some(pattern => pattern.test(command))) {
     console.log(chalk.red('\nBlocked: That command is not allowed.\n'))
     return null
   }
 
-  const confirmed = await confirmRun(command)
+  const confirmed = await confirmRun(command, rl)
   if (!confirmed) {
     console.log(chalk.yellow('\nRun cancelled.\n'))
     return null

@@ -308,7 +308,7 @@ export async function chatCommand(options) {
           }
 
           generatedCommand = extractCommand(generatedCommand.trim())
-          const output = await runCommand(generatedCommand)
+          const output = await runCommand(generatedCommand, rl)
 
           if (output) {
             conversationHistory.push({ role: 'user', content: cleanInput })
