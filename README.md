@@ -245,7 +245,6 @@ rubber-duck-cli is and will remain open source and BYOK. Features that require a
 - [x] `--write` flag — write responses to files
 - [x] `--git` flag — git integration and commit message generation
 - [ ] `--run` flag — execute terminal commands safely
-- [ ] TTS voice mode
 - [ ] Multi-file write support
 
 ---
