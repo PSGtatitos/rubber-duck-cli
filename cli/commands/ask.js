@@ -6,6 +6,7 @@ import { askGroq } from '../utils/groq.js'
 import { searchWeb } from '../utils/search.js'
 import { extractCode, writeFile } from '../utils/write.js'
 import { getGitContext, isGitRepo } from '../utils/git.js'
+import { runCommand, extractCommand } from '../utils/run.js'
 import Conf from 'conf'
 
 const config = new Conf({ projectName: 'rubber-duck-cli' })
@@ -13,8 +14,15 @@ const config = new Conf({ projectName: 'rubber-duck-cli' })
 const IGNORED = ['node_modules', '.git', '.env', 'dist', 'build']
 const READABLE_EXTENSIONS = ['.js', '.ts', '.json', '.md', '.py', '.html', '.css', '.txt']
 
+function resolvePath(filePath) {
+  if (filePath.startsWith('~')) {
+    return filePath.replace('~', process.env.HOME)
+  }
+  return path.resolve(filePath)
+}
+
 function attachFile(question, filePath) {
-  const resolved = path.resolve(filePath)
+  const resolved = resolvePath(filePath)
 
   if (!fs.existsSync(resolved)) {
     console.log(chalk.red(`File not found: ${filePath}`))
@@ -34,7 +42,7 @@ function attachFile(question, filePath) {
 }
 
 function attachProject(question, projectPath) {
-  const resolved = path.resolve(projectPath)
+  const resolved = resolvePath(projectPath)
 
   if (!fs.existsSync(resolved)) {
     console.log(chalk.red(`Project not found: ${projectPath}`))
@@ -124,13 +132,51 @@ export async function askCommand(question, options) {
     }
   }
 
+  // Handle --run flag
+  if (options.run) {
+    const spinner = ora('Generating command...').start()
+
+    try {
+      const commandPrompt = `Generate only the terminal command to: ${fullQuestion}. Reply with just the command, nothing else. No explanation, no markdown, just the raw command.`
+      const commandStream = await askGroq(commandPrompt, [])
+      let generatedCommand = ''
+
+      spinner.stop()
+
+      for await (const chunk of commandStream) {
+        generatedCommand += chunk.choices[0]?.delta?.content || ''
+      }
+
+      generatedCommand = extractCommand(generatedCommand.trim())
+      const output = await runCommand(generatedCommand)
+
+      if (output) {
+        process.stdout.write(chalk.blue('ATLAS: '))
+        const explainStream = await askGroq(
+          `The command "${generatedCommand}" produced this output:\n${output}\nBriefly explain what this means.`,
+          []
+        )
+
+        for await (const chunk of explainStream) {
+          process.stdout.write(chunk.choices[0]?.delta?.content || '')
+        }
+        console.log('\n')
+      }
+
+    } catch (error) {
+      spinner.stop()
+      console.log(chalk.red(`Error: ${error.message}`))
+      process.exit(1)
+    }
+    return
+  }
+
   const spinner = ora('Thinking...').start()
 
   try {
     let searchResults = null
     let urls = []
 
-    // Handle --search flag
     if (options.search) {
       if (!config.get('tavilyApiKey')) {
         spinner.stop()
@@ -165,13 +211,11 @@ export async function askCommand(question, options) {
       }
     }
 
-    // Print sources if search was used
     if (urls.length > 0) {
       console.log('\n' + chalk.gray('Sources:'))
       urls.forEach(url => console.log(chalk.gray(`→ ${url}`)))
     }
 
-    // Handle --write flag
     if (options.write) {
       const code = extractCode(fullResponse)
       const written = await writeFile(options.write, code)

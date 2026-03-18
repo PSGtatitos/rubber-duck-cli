@@ -6,6 +6,7 @@ import { askGroq } from '../utils/groq.js'
 import { searchWeb } from '../utils/search.js'
 import { extractCode, writeFile } from '../utils/write.js'
 import { getGitContext, isGitRepo } from '../utils/git.js'
+import { runCommand, extractCommand } from '../utils/run.js'
 import { handleSystemCommand } from '../utils/system.js'
 import Conf from 'conf'
 
@@ -30,13 +31,20 @@ const MIN_INPUT_LENGTH = 2
 const IGNORED = ['node_modules', '.git', '.env', 'dist', 'build']
 const READABLE_EXTENSIONS = ['.js', '.ts', '.json', '.md', '.py', '.html', '.css', '.txt']
 
+function resolvePath(filePath) {
+  if (filePath.startsWith('~')) {
+    return filePath.replace('~', process.env.HOME)
+  }
+  return path.resolve(filePath)
+}
+
 function attachFile(userInput) {
   if (!userInput.includes('--file')) return userInput
 
   const parts = userInput.split('--file')
   const question = parts[0].trim()
   const filePath = parts[1].trim()
-  const resolved = path.resolve(filePath)
+  const resolved = resolvePath(filePath)
 
   if (!fs.existsSync(resolved)) {
     console.log(chalk.red(`File not found: ${filePath}\n`))
@@ -61,7 +69,7 @@ function attachProject(userInput) {
   const parts = userInput.split('--project')
   const question = parts[0].trim()
   const projectPath = parts[1].trim()
-  const resolved = path.resolve(projectPath)
+  const resolved = resolvePath(projectPath)
 
   if (!fs.existsSync(resolved)) {
     console.log(chalk.red(`Project not found: ${projectPath}`))
@@ -113,9 +121,8 @@ export async function chatCommand(options) {
 
   const conversationHistory = []
 
-  // If file passed at startup load it into context
   if (options.file) {
-    const filePath = path.resolve(options.file)
+    const filePath = resolvePath(options.file)
 
     if (!fs.existsSync(filePath)) {
       console.log(chalk.red(`File not found: ${options.file}`))
@@ -143,9 +150,8 @@ export async function chatCommand(options) {
     console.log(chalk.gray(`\nLoaded: ${fileName}\n`))
   }
 
-  // If project passed at startup load it into context
   if (options.project) {
-    const projectPath = path.resolve(options.project)
+    const projectPath = resolvePath(options.project)
 
     if (!fs.existsSync(projectPath)) {
       console.log(chalk.red(`Project not found: ${options.project}`))
@@ -198,7 +204,6 @@ export async function chatCommand(options) {
     console.log(chalk.gray(`\nLoaded project: ${options.project}\n`))
   }
 
-  // If git flag passed at startup load git context
   if (options.git) {
     if (!isGitRepo()) {
       console.log(chalk.red('Not a git repository.'))
@@ -226,6 +231,7 @@ export async function chatCommand(options) {
   console.log(chalk.cyan('  Tip: search the web with --search in your message'))
   console.log(chalk.cyan('  Tip: write response to a file with --write filename'))
   console.log(chalk.cyan('  Tip: include git context with --git in your message'))
+  console.log(chalk.cyan('  Tip: run a terminal command with RUN at the end'))
   console.log(chalk.cyan('─'.repeat(50)) + '\n')
 
   const rl = readline.createInterface({
@@ -237,9 +243,7 @@ export async function chatCommand(options) {
     rl.question(chalk.green('You: '), async (input) => {
       let userInput = input.trim()
 
-      if (!userInput) {
-        return askQuestion()
-      }
+      if (!userInput) return askQuestion()
 
       if (STOP_PHRASES.some(p => userInput.toLowerCase().includes(p))) {
         console.log(chalk.cyan('\nATLAS: Goodbye!\n'))
@@ -255,7 +259,7 @@ export async function chatCommand(options) {
         return askQuestion()
       }
 
-      // Extract --write target before processing
+      // Extract --write target
       let writeTarget = null
       if (userInput.includes('--write')) {
         const parts = userInput.split('--write')
@@ -288,6 +292,53 @@ export async function chatCommand(options) {
         if (gitContext) {
           userInput = `${userInput}\n\nHere is the current git context:\n\`\`\`\n${gitContext}\n\`\`\``
         }
+      }
+
+      // RUN keyword check
+      if (/\bRUN\b/i.test(userInput)) {
+        const cleanInput = userInput.replace(/\bRUN\b/gi, '').trim()
+
+        try {
+          const commandPrompt = `Generate only the terminal command to: ${cleanInput}. Reply with just the command, nothing else. No explanation, no markdown, just the raw command.`
+          const commandStream = await askGroq(commandPrompt, conversationHistory)
+          let generatedCommand = ''
+
+          for await (const chunk of commandStream) {
+            generatedCommand += chunk.choices[0]?.delta?.content || ''
+          }
+
+          generatedCommand = extractCommand(generatedCommand.trim())
+          const output = await runCommand(generatedCommand)
+
+          if (output) {
+            conversationHistory.push({ role: 'user', content: cleanInput })
+            conversationHistory.push({
+              role: 'assistant',
+              content: `I ran: ${generatedCommand}\n\nOutput:\n${output}`
+            })
+
+            process.stdout.write(chalk.blue('ATLAS: '))
+            const explainStream = await askGroq(
+              `The command "${generatedCommand}" produced this output:\n${output}\nBriefly explain what this means.`,
+              conversationHistory
+            )
+
+            let explanation = ''
+            for await (const chunk of explainStream) {
+              const token = chunk.choices[0]?.delta?.content || ''
+              process.stdout.write(token)
+              explanation += token
+            }
+            console.log('\n')
+
+            conversationHistory.push({ role: 'assistant', content: explanation })
+          }
+
+        } catch (error) {
+          console.log(chalk.red(`\nError: ${error.message}\n`))
+        }
+
+        return askQuestion()
       }
 
       // Web search check
@@ -341,7 +392,6 @@ export async function chatCommand(options) {
           }
         }
 
-        // Handle --write
         if (writeTarget) {
           const code = extractCode(fullResponse)
           const written = await writeFile(writeTarget, code)
@@ -351,7 +401,6 @@ export async function chatCommand(options) {
           writeTarget = null
         }
 
-        // Print sources if search was used
         if (searchUrls.length > 0) {
           console.log('\n' + chalk.gray('Sources:'))
           searchUrls.forEach(url => console.log(chalk.gray(`→ ${url}`)))
