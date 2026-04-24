@@ -30,6 +30,7 @@ const NOISE_WORDS = new Set([
 const MIN_INPUT_LENGTH = 2
 const IGNORED = ['node_modules', '.git', '.env', 'dist', 'build']
 const READABLE_EXTENSIONS = ['.js', '.ts', '.json', '.md', '.py', '.html', '.css', '.txt']
+const MAX_CONTEXT_CHARS = 24000
 
 function resolvePath(filePath) {
   if (filePath.startsWith('~')) {
@@ -38,78 +39,92 @@ function resolvePath(filePath) {
   return path.resolve(filePath)
 }
 
+// Collects project files as structured objects { label, content }
+function collectProject(pathToRead, level = 0) {
+  const result = []
+  const dirContent = fs.readdirSync(pathToRead)
+  for (const item of dirContent) {
+    if (IGNORED.includes(item)) continue
+    const fullPath = path.join(pathToRead, item)
+    const stats = fs.statSync(fullPath)
+    const indent = '  '.repeat(level)
+    if (stats.isDirectory()) {
+      result.push({ label: `\n${indent}📁 ${item}/`, content: null })
+      result.push(...collectProject(fullPath, level + 1))
+    } else if (stats.isFile()) {
+      const ext = path.extname(item)
+      const label = `\n${indent}📄 ${item}`
+      if (READABLE_EXTENSIONS.includes(ext) && stats.size < 20000) {
+        result.push({ label, content: fs.readFileSync(fullPath, 'utf8') })
+      } else {
+        result.push({ label, content: null })
+      }
+    }
+  }
+  return result
+}
+
+// Truncates project file contents to stay within MAX_CONTEXT_CHARS
+function truncateProjectFiles(files) {
+  let total = 0
+  const result = []
+  for (const { label, content } of files) {
+    const remaining = MAX_CONTEXT_CHARS - total
+    if (remaining <= 0) {
+      result.push(`${label}\n  [skipped — context budget exceeded]`)
+      continue
+    }
+    if (content === null) {
+      result.push(label)
+      continue
+    }
+    if (total + content.length > MAX_CONTEXT_CHARS) {
+      result.push(`${label}\n  \`\`\`\n${content.slice(0, remaining)}\n  [...truncated]\n  \`\`\``)
+      total = MAX_CONTEXT_CHARS
+    } else {
+      result.push(`${label}\n  \`\`\`\n${content}\n  \`\`\``)
+      total += content.length
+    }
+  }
+  return result
+}
+
 function attachFile(userInput) {
   if (!userInput.includes('--file')) return userInput
-
   const parts = userInput.split('--file')
   const question = parts[0].trim()
   const filePath = parts[1].trim()
   const resolved = resolvePath(filePath)
-
   if (!fs.existsSync(resolved)) {
     console.log(chalk.red(`File not found: ${filePath}\n`))
     return null
   }
-
   const stats = fs.statSync(resolved)
   if (stats.size > 50000) {
     console.log(chalk.red('File too large. Maximum size is 50kb.\n'))
     return null
   }
-
   const fileContent = fs.readFileSync(resolved, 'utf8')
   const fileName = path.basename(resolved)
-
   return `${question}\n\nHere is the file "${fileName}":\n\`\`\`\n${fileContent}\n\`\`\``
 }
 
 function attachProject(userInput) {
   if (!userInput.includes('--project')) return userInput
-
   const parts = userInput.split('--project')
   const question = parts[0].trim()
   const projectPath = parts[1].trim()
   const resolved = resolvePath(projectPath)
-
   if (!fs.existsSync(resolved)) {
     console.log(chalk.red(`Project not found: ${projectPath}`))
     return null
   }
-
-  const readProject = (pathToRead, level = 0) => {
-    const result = []
-    const dirContent = fs.readdirSync(pathToRead)
-
-    for (const item of dirContent) {
-      if (IGNORED.includes(item)) continue
-
-      const fullPath = path.join(pathToRead, item)
-      const stats = fs.statSync(fullPath)
-
-      if (stats.isDirectory()) {
-        result.push(`\n${'  '.repeat(level)}📁 ${item}/`)
-        result.push(...readProject(fullPath, level + 1))
-      } else if (stats.isFile()) {
-        const ext = path.extname(item)
-        result.push(`\n${'  '.repeat(level)}📄 ${item}`)
-
-        if (READABLE_EXTENSIONS.includes(ext) && stats.size < 20000) {
-          const content = fs.readFileSync(fullPath, 'utf8')
-          result.push(`${'  '.repeat(level + 1)}\`\`\`\n${content}\n\`\`\``)
-        }
-      }
-    }
-
-    return result
-  }
-
-  const projectContent = readProject(resolved)
-  const fullText = projectContent.join('\n')
-
-  if (fullText.length > 40000) {
+  const files = collectProject(resolved)
+  const lines = truncateProjectFiles(files)
+  const fullText = lines.join('\n')
+  if (fullText.length >= MAX_CONTEXT_CHARS) {
     console.log(chalk.yellow('Warning: Project is large, some files may be truncated.\n'))
   }
-
   return `${question}\n\nProject "${projectPath}" structure and contents:\n${fullText}`
 }
 
@@ -123,21 +138,17 @@ export async function chatCommand(options) {
 
   if (options.file) {
     const filePath = resolvePath(options.file)
-
     if (!fs.existsSync(filePath)) {
       console.log(chalk.red(`File not found: ${options.file}`))
       process.exit(1)
     }
-
     const stats = fs.statSync(filePath)
     if (stats.size > 50000) {
       console.log(chalk.red('File too large. Maximum size is 50kb.'))
       process.exit(1)
     }
-
     const fileContent = fs.readFileSync(filePath, 'utf8')
     const fileName = path.basename(filePath)
-
     conversationHistory.push({
       role: 'user',
       content: `I'm going to ask you questions about this file "${fileName}":\n\`\`\`\n${fileContent}\n\`\`\``
@@ -146,52 +157,21 @@ export async function chatCommand(options) {
       role: 'assistant',
       content: `Got it! I've read "${fileName}". What would you like to know about it?`
     })
-
     console.log(chalk.gray(`\nLoaded: ${fileName}\n`))
   }
 
   if (options.project) {
     const projectPath = resolvePath(options.project)
-
     if (!fs.existsSync(projectPath)) {
       console.log(chalk.red(`Project not found: ${options.project}`))
       process.exit(1)
     }
-
-    const readProject = (pathToRead, level = 0) => {
-      const result = []
-      const dirContent = fs.readdirSync(pathToRead)
-
-      for (const item of dirContent) {
-        if (IGNORED.includes(item)) continue
-
-        const fullPath = path.join(pathToRead, item)
-        const stats = fs.statSync(fullPath)
-
-        if (stats.isDirectory()) {
-          result.push(`\n${'  '.repeat(level)}📁 ${item}/`)
-          result.push(...readProject(fullPath, level + 1))
-        } else if (stats.isFile()) {
-          const ext = path.extname(item)
-          result.push(`\n${'  '.repeat(level)}📄 ${item}`)
-
-          if (READABLE_EXTENSIONS.includes(ext) && stats.size < 20000) {
-            const content = fs.readFileSync(fullPath, 'utf8')
-            result.push(`${'  '.repeat(level + 1)}\`\`\`\n${content}\n\`\`\``)
-          }
-        }
-      }
-
-      return result
-    }
-
-    const projectContent = readProject(projectPath)
-    const fullText = projectContent.join('\n')
-
-    if (fullText.length > 40000) {
+    const files = collectProject(projectPath)
+    const lines = truncateProjectFiles(files)
+    const fullText = lines.join('\n')
+    if (fullText.length >= MAX_CONTEXT_CHARS) {
       console.log(chalk.yellow('Warning: Project is large, some files may be truncated.\n'))
     }
-
     conversationHistory.push({
       role: 'user',
       content: `I'm going to ask you questions about this project:\n${fullText}`
@@ -200,7 +180,6 @@ export async function chatCommand(options) {
       role: 'assistant',
       content: `Got it! I've read the project structure and contents. What would you like to know?`
     })
-
     console.log(chalk.gray(`\nLoaded project: ${options.project}\n`))
   }
 
@@ -209,7 +188,6 @@ export async function chatCommand(options) {
       console.log(chalk.red('Not a git repository.'))
       process.exit(1)
     }
-
     const gitContext = getGitContext()
     if (gitContext) {
       conversationHistory.push({
@@ -282,12 +260,10 @@ export async function chatCommand(options) {
       // Git context check
       if (userInput.includes('--git')) {
         userInput = userInput.replace('--git', '').trim()
-
         if (!isGitRepo()) {
           console.log(chalk.red('Not a git repository.\n'))
           return askQuestion()
         }
-
         const gitContext = getGitContext()
         if (gitContext) {
           userInput = `${userInput}\n\nHere is the current git context:\n\`\`\`\n${gitContext}\n\`\`\``
@@ -297,32 +273,26 @@ export async function chatCommand(options) {
       // RUN keyword check
       if (/\bRUN\b/i.test(userInput)) {
         const cleanInput = userInput.replace(/\bRUN\b/gi, '').trim()
-
         try {
           const commandPrompt = `Generate only the terminal command to: ${cleanInput}. Reply with just the command, nothing else. No explanation, no markdown, just the raw command.`
           const commandStream = await askGroq(commandPrompt, conversationHistory)
           let generatedCommand = ''
-
           for await (const chunk of commandStream) {
             generatedCommand += chunk.choices[0]?.delta?.content || ''
           }
-
           generatedCommand = extractCommand(generatedCommand.trim())
           const output = await runCommand(generatedCommand, rl)
-
           if (output) {
             conversationHistory.push({ role: 'user', content: cleanInput })
             conversationHistory.push({
               role: 'assistant',
               content: `I ran: ${generatedCommand}\n\nOutput:\n${output}`
             })
-
             process.stdout.write(chalk.blue('ATLAS: '))
             const explainStream = await askGroq(
               `The command "${generatedCommand}" produced this output:\n${output}\nBriefly explain what this means.`,
               conversationHistory
             )
-
             let explanation = ''
             for await (const chunk of explainStream) {
               const token = chunk.choices[0]?.delta?.content || ''
@@ -330,31 +300,24 @@ export async function chatCommand(options) {
               explanation += token
             }
             console.log('\n')
-
             conversationHistory.push({ role: 'assistant', content: explanation })
           }
-
         } catch (error) {
           console.log(chalk.red(`\nError: ${error.message}\n`))
         }
-
         return askQuestion()
       }
 
       // Web search check
       let searchResults = null
       let searchUrls = []
-
       if (userInput.includes('--search')) {
         userInput = userInput.replace('--search', '').trim()
-
         if (!config.get('tavilyApiKey')) {
           console.log(chalk.red('Tavily API key not set. Run atlas config to add it.\n'))
           return askQuestion()
         }
-
         process.stdout.write(chalk.gray('Searching the web...\n'))
-
         try {
           const results = await searchWeb(userInput)
           searchResults = results.formatted
@@ -372,15 +335,12 @@ export async function chatCommand(options) {
 
       try {
         process.stdout.write(chalk.blue('ATLAS: '))
-
         let stream = await askGroq(userInput, conversationHistory, searchResults)
         let fullResponse = ''
-
         for await (const chunk of stream) {
           const token = chunk.choices[0]?.delta?.content || ''
           process.stdout.write(token)
           fullResponse += token
-
           if (chunk.choices[0]?.finish_reason === 'length') {
             await new Promise(resolve => setTimeout(resolve, 1000))
             stream = await askGroq(fullResponse, [
@@ -407,10 +367,8 @@ export async function chatCommand(options) {
         }
 
         console.log('\n')
-
         conversationHistory.push({ role: 'user', content: userInput })
         conversationHistory.push({ role: 'assistant', content: fullResponse })
-
       } catch (error) {
         if (error.status === 429) {
           console.log(chalk.red('\nRate limit reached. Please wait a moment.\n'))
